@@ -51,3 +51,11 @@ st.dataframe(test,
 	}
 	)
 test.to_csv('test.txt', sep='\t', index=False)
+
+hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
