@@ -1,21 +1,27 @@
 import pandas as pd
 import streamlit as st
+from streamlit_calendar import calendar
+from datetime import datetime
+
 
 st.title('理财管理	:moneybag:')
 
 test = pd.read_csv('test.txt',sep='\t').sort_values(by=['到期日'])
 st.text("")
 
+# metrics
 
 col1, col2, col3 = st.columns(3)
 total_asset = col1.metric(label="总资产", value=test['本金'].sum())
 total_count = col2.metric(label="理财数", value=test['本金'].size)
-
-
-
 st.divider()
 
+# add new items
+
+st.subheader('新增')
+
 name = st.text_input('名称')
+
 col1, col2, col3 = st.columns(3)
 with col1:
 	types = st.selectbox('类型',('理财', '定期'))
@@ -33,7 +39,6 @@ with col3:
 st.text("")
 st.text("")
 
-# Add record to dataframe
 if st.button('添加新项'):
 	new_row = {'名称': name,
 				'类型':types,
@@ -50,8 +55,13 @@ if st.button('添加新项'):
 
 
 st.divider()
-st.subheader('详情')
 
+## data display
+
+
+st.subheader('表格视图')
+
+st.text("")
 def highlight(val):
 	if val == '邮政银行':
 		return 'background-color: rgba(255, 255, 0, 0.5); font-weight: bold'
@@ -84,6 +94,91 @@ st.dataframe(test.style.format('￥{:,.0f}',  subset=["本金","收益"])
 
 
 test.to_csv('test.txt', sep='\t', index=False)
+
+
+st.divider()
+
+##日历
+
+
+st.subheader('日历视图')
+
+
+#FF6C6C
+#FFBD45
+#FF4B4B
+#FF6C6C
+#FFBD4
+
+
+bank_color = {"邮政银行":"#FF6C6C",
+			 "工商银行":"#FFBD45",
+			 "中国银行":"#FFBD4",
+             }
+
+events = []
+for i in range(len(test)):
+    event = {
+        'title': test['银行'][i] + '|' + test['类型'][i] + '|' + test['名称'][i]  + '|' + str(test['本金'][i]) ,
+        'color': bank_color[test['银行'][i]],
+        'start': test['到期日'][i]#datetime.strptime(test['到期日'][i], '%m/%d/%Y').date().strftime("%Y-%m-%d")
+    }
+    events.append(event)
+
+# Print the list of dictionaries
+print(events)
+
+calendar_options = {
+"editable": "false",
+"navLinks": "true",
+"selectable": "true",
+"headerToolbar": {
+		"left": "today prev,next",
+		"center": "title",
+		"right": "dayGridDay,dayGridWeek,dayGridMonth",
+		},
+"buttonText":{
+		  "today":"今日",
+		  "prev":"向前",
+		  "next":"向后",
+		  "dayGridDay":"日",
+		  "dayGridWeek":"周",
+		  "dayGridMonth":"月",
+		},
+"initialDate": datetime.now().strftime("%Y-%m-%d"),
+"initialView": "dayGridMonth",
+        }
+
+state = calendar(
+    events=st.session_state.get("events", events),
+    options=calendar_options,
+    custom_css="""
+    .fc-event-past {
+        opacity: 0.8;
+    }
+    .fc-event-time {
+        font-style: italic;
+    }
+    .fc-event-title {
+        font-weight: 700;
+    }
+    .fc-toolbar-title {
+        font-size: 2rem;
+    }
+    .fc-event-title {
+	padding: 0 1px;
+	white-space: normal;
+	}
+    """,
+    key='daygrid',
+)
+
+if state.get("eventsSet") is not None:
+    st.session_state["events"] = state["eventsSet"]
+
+#st.write(state)
+
+## end
 
 hide_streamlit_style = """
 			<style>
